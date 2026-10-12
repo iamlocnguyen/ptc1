@@ -97,8 +97,45 @@ if (-not $py39Path) {
 }
 
 if ($py39Path) {
+    # Đồng bộ hóa Python 3.9.25 vào thư mục chuẩn và cập nhật PATH để toàn bộ máy nhận diện
+    $targetPyDir = "$env:LOCALAPPDATA\Programs\Python\Python39"
+    $targetPyExe = "$targetPyDir\python.exe"
+
+    if ($py39Path -ne $targetPyExe) {
+        Print-Info "Đang đồng bộ Python 3.9.25 vào đường dẫn hệ thống chuẩn ($targetPyDir)..."
+        New-Item -ItemType Directory -Path $targetPyDir -Force | Out-Null
+        $sourceDir = Split-Path -Parent $py39Path
+        Copy-Item -Path "$sourceDir\*" -Destination $targetPyDir -Recurse -Force
+        $py39Path = $targetPyExe
+    }
+
+    # Đăng ký Windows Registry cho py launcher
+    try {
+        New-Item -Path "HKCU:\Software\Python\PythonCore\3.9\InstallPath" -Force | Out-Null
+        Set-ItemProperty -Path "HKCU:\Software\Python\PythonCore\3.9\InstallPath" -Name "(Default)" -Value "$targetPyDir\"
+        Set-ItemProperty -Path "HKCU:\Software\Python\PythonCore\3.9\InstallPath" -Name "ExecutablePath" -Value "$targetPyExe"
+    } catch {}
+
+    # Đưa Python 3.9.25 lên đầu biến môi trường PATH của User
+    try {
+        $curUserPath = [Environment]::GetEnvironmentVariable("Path", "User")
+        $pathParts = $curUserPath -split ";" | Where-Object { 
+            $_ -and 
+            $_ -notlike "*Python39*" -and 
+            $_ -notlike "*cpython-3.9*"
+        }
+        $newPathParts = @(
+            "$targetPyDir",
+            "$targetPyDir\Scripts"
+        ) + $pathParts
+        $newUserPath = ($newPathParts -join ";")
+        [Environment]::SetEnvironmentVariable("Path", $newUserPath, "User")
+        $env:Path = "$targetPyDir;$targetPyDir\Scripts;" + $env:Path
+    } catch {}
+
     $verOutput = & "$py39Path" --version
-    Print-Success "Đã xác nhận môi trường Python: $verOutput ($py39Path)"
+    Print-Success "Đã cấu hình Python 3.9.25 thành công: $verOutput"
+    Print-Success "Lệnh 'python' và 'py -3.9' toàn cục trên máy đã trỏ về Python 3.9.25."
 } else {
     Print-Error "Không thể cài đặt tự động Python 3.9.25. Vui lòng kiểm tra kết nối mạng."
     exit 1

@@ -14,9 +14,9 @@ Dự án cung cấp script tự động 1-click cài đặt đầy đủ từ A-
 - Khởi tạo file `.env`, môi trường ảo `.venv` và cài đặt `server/requirements.txt`
 - Chạy toàn bộ 36 tests tự động kiểm thử
 
-### Cách chạy:
-1. **Cách 1 (Nhanh nhất):** Click đúp vào file `setup.bat` (hoặc chuột phải chọn Run as Administrator).
-2. **Cách 2 (Qua PowerShell):** Mở PowerShell với quyền Administrator tại thư mục dự án và chạy:
+### Cách chạy cài đặt 1-click:
+- **Cách 1 (Nhanh nhất - Chỉ cần Click Đúp):** Click đúp vào file **`CAI_DAT.bat`** (hoặc `setup.bat`).
+- **Cách 2 (Qua PowerShell):** Mở PowerShell với quyền Administrator tại thư mục dự án và chạy:
    ```powershell
    Set-ExecutionPolicy Bypass -Scope Process
    .\setup.ps1
@@ -27,13 +27,15 @@ Dự án cung cấp script tự động 1-click cài đặt đầy đủ từ A-
 ## 🏃 Khởi Chạy Server
 
 Sau khi cài đặt xong:
-```powershell
-# Kích hoạt virtualenv
-.\.venv\Scripts\Activate.ps1
+- **Cách 1 (1-Click):** Click đúp vào file **`CHAY_SERVER.bat`** (Tự động khởi chạy FastAPI và tự động mở trình duyệt xem Swagger UI).
+- **Cách 2 (Thủ công):**
+  ```powershell
+  # Kích hoạt virtualenv
+  .\.venv\Scripts\Activate.ps1
 
-# Chạy server FastAPI
-.\.venv\Scripts\uvicorn server.app.main:app --reload --port 8000
-```
+  # Chạy server FastAPI
+  .\.venv\Scripts\uvicorn server.app.main:app --reload --port 8000
+  ```
 
 - **Swagger UI Interactive Docs:** [http://localhost:8000/docs](http://localhost:8000/docs)
 - **ReDoc:** [http://localhost:8000/redoc](http://localhost:8000/redoc)
