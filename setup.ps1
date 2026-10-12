@@ -193,7 +193,23 @@ if ($postgisSqlExists) {
     $bundleSource = if ($subBundleDir) { $subBundleDir.FullName } else { $postgisExtractDir }
 
     Print-Info "Dang sao chep cac tep PostGIS vao $pg14Dir..."
-    Copy-Item -Path "$bundleSource\*" -Destination $pg14Dir -Recurse -Force
+
+    # Tam dung service de tranh loi file dll bi khoa boi tien trinh postgres
+    if ($pgService -and (Get-Service -Name $pgService.Name -ErrorAction SilentlyContinue).Status -eq "Running") {
+        Print-Info "Tam dung PostgreSQL service de cap nhat tep he thong..."
+        Stop-Service -Name $pgService.Name -Force -ErrorAction SilentlyContinue
+        Start-Sleep -Seconds 2
+    }
+
+    # Sao chep cac tep bang robocopy (bo qua loi file dll dang dung neu co)
+    robocopy $bundleSource $pg14Dir /E /IS /IT /R:1 /W:1 /NFL /NDL /NJH /NJS | Out-Null
+
+    # Khoi dong lai service PostgreSQL
+    if ($pgService) {
+        Print-Info "Khoi dong lai PostgreSQL service..."
+        Start-Service -Name $pgService.Name -ErrorAction SilentlyContinue
+        Start-Sleep -Seconds 3
+    }
 
     Remove-Item -Force $postgisZipPath -ErrorAction SilentlyContinue
     Remove-Item -Recurse -Force $postgisExtractDir -ErrorAction SilentlyContinue
