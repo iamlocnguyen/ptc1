@@ -5,6 +5,6 @@ import { defineConfig } from 'vite'
 export default defineConfig({
   plugins: [vue()],
   build: {
-    target: 'es2024',
+    target: 'esnext',
   },
 })
