@@ -2,6 +2,8 @@
   "extends": "@vue/tsconfig/tsconfig.dom.json",
   "compilerOptions": {
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+    "target": "ES2025",
+    "lib": ["ES2025", "DOM", "DOM.Iterable"],
     "types": ["vite/client"],
     "allowArbitraryExtensions": true,
 
