@@ -1,0 +1,12 @@
+.project-memory/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+node_modules/
+dist/
+.dart_tool/
+build/
+.env
+*.db
+.vscode/
