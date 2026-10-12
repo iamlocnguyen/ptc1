@@ -10,9 +10,10 @@ Dự án cung cấp script tự động 1-click cài đặt đầy đủ từ A-
 - **Python 3.9.25**
 - **PostgreSQL 14.x** (Cổng 5432, mật khẩu mặc định `2005`)
 - **PostGIS 3.6.1 Spatial Extension**
+- **Flutter 3.44.9 (Dart 3.12.2 Mobile SDK)**
 - Khởi tạo Database `ptc1_db` và `ptc1_test_db` kèm PostGIS extension
 - Khởi tạo file `.env`, môi trường ảo `.venv` và cài đặt `server/requirements.txt`
-- Chạy toàn bộ 36 tests tự động kiểm thử
+- Chạy toàn bộ 36 tests backend + Flutter widget tests tự động kiểm thử
 
 ### Cách chạy cài đặt 1-click:
 - **Cách 1 (Nhanh nhất - Chỉ cần Click Đúp):** Click đúp vào file **`CAI_DAT.bat`** (hoặc `setup.bat`).

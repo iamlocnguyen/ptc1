@@ -13,7 +13,8 @@ echo    [3] PostGIS 3.6.1 Spatial Extension
 echo    [4] Khoi tao Database ptc1_db, ptc1_test_db & kich hoat PostGIS
 echo    [5] Cau hinh file .env
 echo    [6] Tao Virtualenv (.venv) & cai dat toan bo thu vien
-echo    [7] Chay kiem thu Pytest xac thuc he thong
+echo    [7] Chay kiem thu Pytest xac thuc he thong Backend
+echo    [8] Flutter 3.44.9 SDK (Dart 3.12.2) & Kiem thu Mobile
 echo.
 echo ==============================================================================
 echo Dang khoi dong voi quyen Administrator...

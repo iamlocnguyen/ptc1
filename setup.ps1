@@ -313,12 +313,82 @@ if (Test-Path $pytestExe) {
 }
 
 # ------------------------------------------------------------------------------
+# BƯỚC 8: KIỂM TRA & CÀI ĐẶT FLUTTER 3.44.9 (MOBILE SDK)
+# ------------------------------------------------------------------------------
+Print-Step 8 "Kiểm tra và Cài đặt Flutter 3.44.9 (Mobile SDK)"
+
+$flutterBin = ""
+$standardFlutterPaths = @(
+    "D:\flutter\bin\flutter.bat",
+    "C:\src\flutter\bin\flutter.bat",
+    "$env:USERPROFILE\flutter\bin\flutter.bat"
+)
+
+foreach ($fPath in $standardFlutterPaths) {
+    if (Test-Path $fPath) {
+        $flutterBin = $fPath
+        break
+    }
+}
+
+if (-not $flutterBin) {
+    $fCmd = Get-Command flutter.bat -ErrorAction SilentlyContinue
+    if ($fCmd) {
+        $flutterBin = $fCmd.Source
+    }
+}
+
+if (-not $flutterBin) {
+    Print-Info "Chưa tìm thấy Flutter SDK. Bắt đầu tải và cài đặt Flutter 3.44.9..."
+    $targetFlutterDir = if (Test-Path "D:\") { "D:\flutter" } else { "C:\src\flutter" }
+    Print-Info "Đang tải Flutter 3.44.9 về $targetFlutterDir..."
+    git clone --depth 1 --branch 3.44.9 https://github.com/flutter/flutter.git $targetFlutterDir
+    $flutterBin = "$targetFlutterDir\bin\flutter.bat"
+}
+
+if (Test-Path $flutterBin) {
+    $flutterDir = Split-Path (Split-Path $flutterBin -Parent) -Parent
+    $flutterBinDir = "$flutterDir\bin"
+
+    # Thêm vào PATH nếu chưa có
+    try {
+        $curUserPath = [Environment]::GetEnvironmentVariable("Path", "User")
+        if ($curUserPath -notlike "*$flutterBinDir*") {
+            [Environment]::SetEnvironmentVariable("Path", "$curUserPath;$flutterBinDir", "User")
+        }
+        $env:Path = "$flutterBinDir;" + $env:Path
+    } catch {}
+
+    $fVer = & "$flutterBin" --version | Select-Object -First 1
+    Print-Success "Đã xác nhận môi trường Flutter: $fVer"
+
+    # Chạy test mobile nếu có thư mục mobile
+    $mobileDir = "$ProjectRoot\mobile"
+    if (Test-Path "$mobileDir\pubspec.yaml") {
+        Print-Info "Đang chạy kiểm thử cho dự án Mobile (Flutter)..."
+        Push-Location $mobileDir
+        try {
+            & "$flutterBin" test
+            if ($LASTEXITCODE -eq 0) {
+                Print-Success "Kiểm thử Mobile hoàn tất: 100% Passed!"
+            }
+        } finally {
+            Pop-Location
+        }
+    }
+} else {
+    Print-Info "Bỏ qua cài đặt Flutter SDK do không thể tải. (Bạn có thể cài đặt sau nếu cần làm Mobile)"
+}
+
+# ------------------------------------------------------------------------------
 # HOÀN TẤT
 # ------------------------------------------------------------------------------
 Write-Host "`n========================================================" -ForegroundColor Green
 Write-Host " [HOÀN TẤT CÀI ĐẶT] Môi trường PTC1 đã sẵn sàng!" -ForegroundColor Green
 Write-Host "========================================================" -ForegroundColor Green
-Write-Host "Để khởi chạy máy chủ backend, chạy lệnh sau:" -ForegroundColor Yellow
-Write-Host "  .\.venv\Scripts\uvicorn server.app.main:app --reload --port 8000" -ForegroundColor Cyan
-Write-Host "Truy cập Swagger UI tại: http://localhost:8000/docs" -ForegroundColor Cyan
+Write-Host "1. Khởi chạy Backend FastAPI:" -ForegroundColor Yellow
+Write-Host "   Click đúp 'CHAY_SERVER.bat' hoặc chạy:" -ForegroundColor Cyan
+Write-Host "   .\.venv\Scripts\uvicorn server.app.main:app --reload --port 8000" -ForegroundColor Cyan
+Write-Host "2. Swagger UI: http://localhost:8000/docs" -ForegroundColor Cyan
+Write-Host "3. Flutter Mobile SDK: $flutterBin" -ForegroundColor Cyan
 Write-Host "========================================================`n" -ForegroundColor Green
