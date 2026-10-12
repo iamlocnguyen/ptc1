@@ -16,26 +16,38 @@ def test_redoc_page_loads(client: TestClient) -> None:
 
 
 def test_openapi_json_schema(client: TestClient) -> None:
-    """Kiểm tra endpoint /openapi.json trả về schema OpenAPI hợp lệ."""
+    """Kiểm tra endpoint /openapi.json trả về schema OpenAPI hợp lệ cho 3 role bảng (User, Seller, Admin)."""
     response = client.get("/openapi.json")
     assert response.status_code == 200
     schema = response.json()
     assert "openapi" in schema
     assert "paths" in schema
-    assert "/api/v1/auth/register" in schema["paths"]
-    assert "/api/v1/auth/login" in schema["paths"]
-    # Kiểm tra khẳng định không còn bất kỳ endpoint nào liên quan đến health hay items
-    assert "/api/v1/health" not in schema["paths"]
-    assert not any("/items" in p for p in schema["paths"])
 
-    # Kiểm tra components schemas
+    # Kiểm tra endpoints của 3 role
+    paths = schema["paths"]
+    assert "/api/v1/auth/user/register" in paths
+    assert "/api/v1/auth/user/login" in paths
+    assert "/api/v1/auth/seller/register" in paths
+    assert "/api/v1/auth/seller/login" in paths
+    assert "/api/v1/auth/admin/login" in paths
+
+    # Khẳng định không còn route guest, items hay health
+    assert "/api/v1/health" not in paths
+    assert not any("/guest" in p for p in paths)
+    assert not any("/items" in p for p in paths)
+
+    # Kiểm tra components schemas của 3 role
     schemas = schema["components"]["schemas"]
     assert "UserRegister" in schemas
-    assert "UserLogin" in schemas
-    assert "UserResponse" in schemas
-    assert not any(name.startswith("Item") for name in schemas)
+    assert "SellerRegister" in schemas
+    assert "AdminLogin" in schemas
+    assert not any("Guest" in name for name in schemas)
 
-    # Kiểm tra tags không còn tag Health Check và Items Management
+    # Kiểm tra tags của 3 role
     tag_names = [tag["name"] for tag in schema.get("tags", [])]
+    assert "User Authentication" in tag_names
+    assert "Seller Authentication" in tag_names
+    assert "Admin Authentication" in tag_names
+    assert "Guest Session" not in tag_names
     assert "Health Check" not in tag_names
     assert "Items Management" not in tag_names

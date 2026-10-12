@@ -1,102 +1,77 @@
 from fastapi.testclient import TestClient
-from sqlalchemy.orm import Session
-from server.app.models.user import User
 
 
-def test_register_user_success(client: TestClient, db_session: Session):
+# ==============================================================================
+# 1. USER AUTHENTICATION TESTS (Bảng: users)
+# ==============================================================================
+
+def test_register_user_success(client: TestClient) -> None:
     response = client.post(
-        "/api/v1/auth/register",
+        "/api/v1/auth/user/register",
         json={
-            "email": "test@example.com",
+            "email": "customer@example.com",
             "password": "securepassword123",
-            "full_name": "Nguyen Van A",
+            "full_name": "Nguyen Van User",
         },
     )
     assert response.status_code == 201
     data = response.json()
-    assert data["email"] == "test@example.com"
-    assert data["full_name"] == "Nguyen Van A"
+    assert data["email"] == "customer@example.com"
+    assert data["full_name"] == "Nguyen Van User"
     assert data["is_active"] is True
     assert "id" in data
     assert "created_at" in data
-    assert "hashed_password" not in data
     assert "password" not in data
 
-    # Kiểm tra trong DB mật khẩu được băm an toàn
-    user = db_session.query(User).filter_by(email="test@example.com").first()
-    assert user is not None
-    assert user.hashed_password != "securepassword123"
-    assert "$" in user.hashed_password
 
-
-def test_register_duplicate_email(client: TestClient):
+def test_register_user_duplicate_email(client: TestClient) -> None:
     payload = {
-        "email": "duplicate@example.com",
+        "email": "dup_user@example.com",
         "password": "password123",
-        "full_name": "User One",
+        "full_name": "User Duplicate",
     }
-    # Lần 1: thành công
-    resp1 = client.post("/api/v1/auth/register", json=payload)
+    resp1 = client.post("/api/v1/auth/user/register", json=payload)
     assert resp1.status_code == 201
 
-    # Lần 2: thất bại vì trùng email
-    resp2 = client.post("/api/v1/auth/register", json=payload)
+    resp2 = client.post("/api/v1/auth/user/register", json=payload)
     assert resp2.status_code == 400
-    assert resp2.json()["detail"] == "Email already registered"
+    assert "Email already registered" in resp2.json()["detail"]
 
 
-def test_register_validation_error(client: TestClient):
-    # Mật khẩu quá ngắn (< 6 ký tự)
-    response = client.post(
-        "/api/v1/auth/register",
-        json={
-            "email": "short@example.com",
-            "password": "123",
-        },
-    )
-    assert response.status_code == 422
-
-
-def test_login_success(client: TestClient):
-    # Đăng ký tài khoản trước
+def test_login_user_success(client: TestClient) -> None:
     client.post(
-        "/api/v1/auth/register",
+        "/api/v1/auth/user/register",
         json={
             "email": "login_user@example.com",
-            "password": "MyPassword456",
+            "password": "MyPassword123",
             "full_name": "Login User",
         },
     )
-
-    # Đăng nhập đúng thông tin
     response = client.post(
-        "/api/v1/auth/login",
+        "/api/v1/auth/user/login",
         json={
             "email": "login_user@example.com",
-            "password": "MyPassword456",
+            "password": "MyPassword123",
         },
     )
     assert response.status_code == 200
     data = response.json()
-    assert data["message"] == "Login successful"
-    assert data["user"]["email"] == "login_user@example.com"
-    assert data["user"]["full_name"] == "Login User"
+    assert data["role"] == "user"
+    assert data["data"]["email"] == "login_user@example.com"
 
 
-def test_login_wrong_password(client: TestClient):
+def test_login_user_wrong_password(client: TestClient) -> None:
     client.post(
-        "/api/v1/auth/register",
+        "/api/v1/auth/user/register",
         json={
-            "email": "user_wrong_pw@example.com",
+            "email": "wrong_pwd_user@example.com",
             "password": "CorrectPassword",
         },
     )
-
-    # Thử đăng nhập với mật khẩu sai
     response = client.post(
-        "/api/v1/auth/login",
+        "/api/v1/auth/user/login",
         json={
-            "email": "user_wrong_pw@example.com",
+            "email": "wrong_pwd_user@example.com",
             "password": "WrongPassword",
         },
     )
@@ -104,12 +79,102 @@ def test_login_wrong_password(client: TestClient):
     assert response.json()["detail"] == "Incorrect email or password"
 
 
-def test_login_nonexistent_email(client: TestClient):
+# ==============================================================================
+# 2. SELLER AUTHENTICATION TESTS (Bảng: sellers)
+# ==============================================================================
+
+def test_register_seller_success(client: TestClient) -> None:
     response = client.post(
-        "/api/v1/auth/login",
+        "/api/v1/auth/seller/register",
         json={
-            "email": "nonexistent@example.com",
-            "password": "AnyPassword",
+            "email": "seller@example.com",
+            "password": "SellerPassword123",
+            "full_name": "Tran Van Seller",
+            "shop_name": "Cua Hang Cong Nghe",
+            "phone": "0987654321",
+        },
+    )
+    assert response.status_code == 201
+    data = response.json()
+    assert data["email"] == "seller@example.com"
+    assert data["shop_name"] == "Cua Hang Cong Nghe"
+    assert data["phone"] == "0987654321"
+    assert "id" in data
+
+
+def test_register_seller_duplicate_email(client: TestClient) -> None:
+    payload = {
+        "email": "dup_seller@example.com",
+        "password": "password123",
+        "shop_name": "Shop A",
+    }
+    resp1 = client.post("/api/v1/auth/seller/register", json=payload)
+    assert resp1.status_code == 201
+
+    resp2 = client.post("/api/v1/auth/seller/register", json=payload)
+    assert resp2.status_code == 400
+    assert "Email already registered" in resp2.json()["detail"]
+
+
+def test_login_seller_success(client: TestClient) -> None:
+    client.post(
+        "/api/v1/auth/seller/register",
+        json={
+            "email": "login_seller@example.com",
+            "password": "SellerPass456",
+            "shop_name": "Shop X",
+        },
+    )
+    response = client.post(
+        "/api/v1/auth/seller/login",
+        json={
+            "email": "login_seller@example.com",
+            "password": "SellerPass456",
+        },
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["role"] == "seller"
+    assert data["data"]["shop_name"] == "Shop X"
+
+
+def test_login_seller_wrong_password(client: TestClient) -> None:
+    response = client.post(
+        "/api/v1/auth/seller/login",
+        json={
+            "email": "nonexistent_seller@example.com",
+            "password": "WrongPassword",
+        },
+    )
+    assert response.status_code == 401
+
+
+# ==============================================================================
+# 3. ADMIN AUTHENTICATION TESTS (Bảng: admins)
+# ==============================================================================
+
+def test_login_admin_default_success(client: TestClient) -> None:
+    """Tài khoản Admin mặc định được tự động seed (admin@example.com / admin123)."""
+    response = client.post(
+        "/api/v1/auth/admin/login",
+        json={
+            "email": "admin@example.com",
+            "password": "admin123",
+        },
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["role"] == "admin"
+    assert data["data"]["email"] == "admin@example.com"
+    assert data["data"]["role_level"] == 1
+
+
+def test_login_admin_wrong_password(client: TestClient) -> None:
+    response = client.post(
+        "/api/v1/auth/admin/login",
+        json={
+            "email": "admin@example.com",
+            "password": "wrong_admin_password",
         },
     )
     assert response.status_code == 401

@@ -5,16 +5,9 @@ from server.app.core.config import settings
 
 
 def _create_engine():
-    url = settings.DATABASE_URL
-    if url.startswith("sqlite"):
-        return create_engine(
-            url,
-            echo=settings.DB_ECHO,
-            connect_args={"check_same_thread": False},
-        )
-    # PostgreSQL / MySQL connection pool configuration
+    """Tạo engine kết nối thuần PostgreSQL qua driver psycopg kèm Connection Pool."""
     return create_engine(
-        url,
+        settings.DATABASE_URL,
         echo=settings.DB_ECHO,
         pool_pre_ping=True,
         pool_size=5,

@@ -27,16 +27,8 @@ class UserRegister(BaseModel):
 
 
 class UserLogin(BaseModel):
-    email: str = Field(
-        ...,
-        description="Địa chỉ email đăng nhập",
-        examples=["user@example.com"],
-    )
-    password: str = Field(
-        ...,
-        description="Mật khẩu đăng nhập",
-        examples=["SecretPass123"],
-    )
+    email: str = Field(..., description="Email đăng nhập", examples=["user@example.com"])
+    password: str = Field(..., description="Mật khẩu", examples=["SecretPass123"])
 
 
 class UserResponse(BaseModel):
@@ -47,8 +39,3 @@ class UserResponse(BaseModel):
     created_at: datetime = Field(..., description="Thời gian tạo tài khoản")
 
     model_config = ConfigDict(from_attributes=True)
-
-
-class LoginResponse(BaseModel):
-    message: str = Field("Login successful", description="Thông báo đăng nhập")
-    user: UserResponse = Field(..., description="Thông tin người dùng đã đăng nhập")
