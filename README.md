@@ -7,7 +7,7 @@ Hệ thống Backend FastAPI tích hợp xác thực đa vai trò (User, Seller,
 ## 🚀 Cài Đặt Tự Động (Dành cho máy mới / người khác)
 
 Dự án cung cấp script tự động 1-click cài đặt đầy đủ từ A-Z môi trường chạy trên Windows:
-- **Python 3.9.13 (64-bit)**
+- **Python 3.9.25**
 - **PostgreSQL 14.x** (Cổng 5432, mật khẩu mặc định `2005`)
 - **PostGIS 3.6.1 Spatial Extension**
 - Khởi tạo Database `ptc1_db` và `ptc1_test_db` kèm PostGIS extension

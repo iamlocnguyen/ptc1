@@ -47,64 +47,61 @@ Set-Location $ProjectRoot
 Print-Info "Thư mục dự án: $ProjectRoot"
 
 # ------------------------------------------------------------------------------
-# BƯỚC 1: KIỂM TRA & CÀI ĐẶT PYTHON 3.9
+# BƯỚC 1: KIỂM TRA & CÀI ĐẶT PYTHON 3.9.25
 # ------------------------------------------------------------------------------
-Print-Step 1 "Kiểm tra và Cài đặt Python 3.9"
+Print-Step 1 "Kiểm tra và Cài đặt Python 3.9.25 (Bản bảo mật chuẩn CPython)"
 
 $py39Path = ""
-# Kiểm tra nếu Python 3.9 đã cài
-$standardPy39Paths = @(
-    "$env:LOCALAPPDATA\Programs\Python\Python39\python.exe",
-    "C:\Program Files\Python39\python.exe",
-    "C:\Python39\python.exe"
-)
+$uvPy39Path = "$env:APPDATA\uv\python\cpython-3.9.25-windows-x86_64-none\python.exe"
 
-foreach ($path in $standardPy39Paths) {
-    if (Test-Path $path) {
-        $py39Path = $path
-        break
-    }
+if (Test-Path $uvPy39Path) {
+    $py39Path = $uvPy39Path
 }
 
 if (-not $py39Path) {
-    $pyLauncher = Get-Command py.exe -ErrorAction SilentlyContinue
-    if ($pyLauncher) {
-        $checkPy = & py -3.9 -c "import sys; print(sys.executable)" 2>$null
-        if ($checkPy -and (Test-Path $checkPy)) {
-            $py39Path = $checkPy.Trim()
+    # Kiểm tra xem có lệnh uv sẵn không
+    $uvCmd = Get-Command uv.exe -ErrorAction SilentlyContinue
+    if (-not $uvCmd) {
+        Print-Info "Đang kiểm tra và cài đặt công cụ uv để tải Python 3.9.25..."
+        try {
+            winget install --id astral-sh.uv --silent --accept-package-agreements --accept-source-agreements
+        } catch {}
+        
+        $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+        $uvCmd = Get-Command uv.exe -ErrorAction SilentlyContinue
+    }
+
+    if ($uvCmd) {
+        Print-Info "Đang tải và cài đặt Python 3.9.25 qua uv..."
+        & uv python install 3.9.25
+        $foundPath = & uv python find 3.9.25 2>$null
+        if ($foundPath -and (Test-Path $foundPath.Trim())) {
+            $py39Path = $foundPath.Trim()
         }
     }
 }
 
-if ($py39Path) {
-    Print-Success "Đã tìm thấy Python 3.9 tại: $py39Path"
-} else {
-    Print-Info "Chưa tìm thấy Python 3.9. Bắt đầu tải và cài đặt Python 3.9.13 (64-bit)..."
-    $pyInstallerUrl = "https://www.python.org/ftp/python/3.9.13/python-3.9.13-amd64.exe"
-    $pyInstallerPath = "$env:TEMP\python-3.9.13-amd64.exe"
-
-    Print-Info "Đang tải Python 3.9.13 từ $pyInstallerUrl..."
-    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-    Invoke-WebRequest -Uri $pyInstallerUrl -OutFile $pyInstallerPath -UseBasicParsing
-
-    Print-Info "Đang cài đặt Python 3.9 vào hệ thống..."
-    Start-Process -FilePath $pyInstallerPath -ArgumentList "/quiet InstallAllUsers=1 PrependPath=1 Include_test=0" -Wait
-    Remove-Item -Force $pyInstallerPath -ErrorAction SilentlyContinue
-
-    # Refresh Path
-    $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
-
-    # Kiểm tra lại
-    foreach ($path in $standardPy39Paths) {
+# Nếu vẫn chưa tìm được, fallback các đường dẫn tiêu chuẩn
+if (-not $py39Path) {
+    $fallbackPaths = @(
+        "$env:LOCALAPPDATA\Programs\Python\Python39\python.exe",
+        "C:\Program Files\Python39\python.exe",
+        "C:\Python39\python.exe"
+    )
+    foreach ($path in $fallbackPaths) {
         if (Test-Path $path) {
             $py39Path = $path
             break
         }
     }
-    if (-not $py39Path) {
-        $py39Path = "C:\Program Files\Python39\python.exe"
-    }
-    Print-Success "Cài đặt Python 3.9 hoàn tất: $py39Path"
+}
+
+if ($py39Path) {
+    $verOutput = & "$py39Path" --version
+    Print-Success "Đã xác nhận môi trường Python: $verOutput ($py39Path)"
+} else {
+    Print-Error "Không thể cài đặt tự động Python 3.9.25. Vui lòng kiểm tra kết nối mạng."
+    exit 1
 }
 
 # ------------------------------------------------------------------------------
