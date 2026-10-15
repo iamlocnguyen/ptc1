@@ -14,3 +14,4 @@ build/
 *.zip
 *.log
 postgis-bundle-*/
+.idea/
